@@ -1,0 +1,19 @@
+# A separate CPU confidential VM for the count-only meter boundary.
+#
+# Phala's <app-id>-8443s gateway endpoint is TLS pass-through: this process,
+# not a load balancer, receives and validates the GPU CVM's client certificate.
+services:
+  meter-ingress:
+    image: ${METER_INGRESS_IMAGE:?immutable GHCR image digest required}
+    restart: unless-stopped
+    ports:
+      - "8443:8443"
+    environment:
+      LISTEN_ADDR: ":8443"
+      TLS_CERT_PEM_B64: ${TLS_CERT_PEM_B64:?sealed server certificate required}
+      TLS_KEY_PEM_B64: ${TLS_KEY_PEM_B64:?sealed server key required}
+      CLIENT_CA_PEM_B64: ${CLIENT_CA_PEM_B64:?sealed CVM client CA required}
+      EXPECTED_CLIENT_SPKI_SHA256: ${EXPECTED_CLIENT_SPKI_SHA256:?CVM client SPKI pin required}
+      BILLING_METER_URL: ${BILLING_METER_URL:?fixed billing endpoint required}
+      BILLING_INGRESS_SECRET: ${BILLING_INGRESS_SECRET:?sealed ingress secret required}
+      REQUEST_TIMEOUT_SECONDS: "15"

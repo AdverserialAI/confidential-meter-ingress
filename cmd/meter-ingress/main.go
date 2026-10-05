@@ -11,6 +11,10 @@ import (
 
 func main() {
 	logger := slog.New(slog.NewJSONHandler(os.Stderr, &slog.HandlerOptions{Level: slog.LevelInfo}))
+	if err := config.MaterializeSealedTLSFromEnv(); err != nil {
+		logger.Error("cannot materialize sealed TLS", "error", err.Error())
+		os.Exit(2)
+	}
 	cfg, err := config.Load()
 	if err != nil {
 		logger.Error("invalid configuration", "error", err.Error())

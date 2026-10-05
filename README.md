@@ -67,6 +67,12 @@ BILLING_INGRESS_SECRET='...' \
 ./meter-ingress
 ```
 
+For a confidential-VM deployment, supply `TLS_CERT_PEM_B64`,
+`TLS_KEY_PEM_B64`, and `CLIENT_CA_PEM_B64` together instead of the three file
+paths. The process writes them only to a private ephemeral directory before
+loading TLS. The ready-to-deploy Phala CPU-TEE profile is in
+[`deploy/phala`](deploy/phala/README.md).
+
 ## Operational checks
 
 * Health check: `GET /healthz` returns `204` and has no billing dependency.
