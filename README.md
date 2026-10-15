@@ -85,3 +85,9 @@ loading TLS. The ready-to-deploy Phala CPU-TEE profile is in
   TLS, the ingress cannot attest to the client certificate.
 
 Please report security vulnerabilities directly to [security@adverserial.ai](mailto:security@adverserial.ai).
+
+## License
+
+This repository is source-available proprietary software owned by Adverserial
+AI LLC. See [`LICENSE`](./LICENSE) and [`LICENSING.md`](./LICENSING.md).
+Third-party components retain their own terms.

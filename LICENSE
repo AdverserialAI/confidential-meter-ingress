@@ -1,21 +1,42 @@
-MIT License
+# Adverserial Proprietary License
 
-Copyright (c) 2026 Adverserial AI LLC
+Copyright (c) 2026 Adverserial AI LLC. All rights reserved.
 
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
+## 1. Ownership
 
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
+The software, source code, documentation, configuration, designs, and other
+materials in this repository (collectively, the "Software") are proprietary to
+Adverserial AI LLC and its licensors.
 
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-SOFTWARE.
+## 2. No license grant
+
+Except under a separate written agreement signed by an authorized
+representative of Adverserial AI LLC, no license or other right is granted to
+use, copy, reproduce, modify, merge, publish, distribute, sublicense, sell,
+lease, host, operate, create derivative works from, or otherwise exploit the
+Software.
+
+Making source code available in this repository does not make the Software open
+source and does not grant permission to use it in production, redistribute it,
+or use it to build, offer, or support a competing product or service.
+
+## 3. Third-party components
+
+Third-party components remain subject to their own license terms. Those terms
+are identified in this repository's dependency manifests and, where present,
+`THIRD_PARTY_NOTICES.md`. Nothing in this license limits rights granted by an
+applicable third-party license.
+
+## 4. Trademarks
+
+"Adverserial AI", "CyberGLM", "CyberKimi", and the associated logos and
+product names are trademarks or trade names of Adverserial AI LLC. This license
+does not grant any right to use them.
+
+## 5. No warranty
+
+THE SOFTWARE IS PROVIDED "AS IS" WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR
+PURPOSE, AND NON-INFRINGEMENT. TO THE MAXIMUM EXTENT PERMITTED BY LAW,
+ADVERSERIAL AI LLC SHALL NOT BE LIABLE FOR ANY CLAIM, DAMAGES, OR OTHER
+LIABILITY ARISING FROM THE SOFTWARE OR ITS USE.
