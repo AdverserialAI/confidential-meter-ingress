@@ -137,6 +137,24 @@ func mTLSClient(pki testPKI) *http.Client {
 	return &http.Client{Transport: &http.Transport{TLSClientConfig: &tls.Config{RootCAs: pki.roots, Certificates: []tls.Certificate{pki.client}, MinVersion: tls.VersionTLS13}}}
 }
 
+func TestBillingClientIsDirectAndRejectsRedirects(t *testing.T) {
+	client := directBillingClient(time.Second)
+	transport, ok := client.Transport.(*http.Transport)
+	if !ok {
+		t.Fatalf("transport type = %T", client.Transport)
+	}
+	if transport.Proxy != nil {
+		t.Fatal("billing client must not honor proxy environment variables")
+	}
+	request, err := http.NewRequest(http.MethodPost, "https://billing.example/cc/meter", nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got := client.CheckRedirect(request, nil); got != http.ErrUseLastResponse {
+		t.Fatalf("redirect policy = %v", got)
+	}
+}
+
 func TestMeterRequiresMTLSAndForwardsBoundedEnvelope(t *testing.T) {
 	pki := newTestPKI(t)
 	var gotHeader, gotBody string

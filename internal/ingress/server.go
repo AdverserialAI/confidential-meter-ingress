@@ -46,8 +46,25 @@ func New(cfg config.Config, logger *slog.Logger) (*Server, error) {
 		cfg:        cfg,
 		billingURL: parsed.String(),
 		logger:     logger,
-		client:     &http.Client{Timeout: time.Duration(cfg.RequestTimeoutSeconds) * time.Second},
+		client:     directBillingClient(time.Duration(cfg.RequestTimeoutSeconds) * time.Second),
 	}, nil
+}
+
+// directBillingClient makes the meter destination an actual fixed endpoint.
+// Following a redirect could disclose the signed meter record and ingress
+// capability header to a different host. Proxy environment variables have the
+// same problem and are not a delivery requirement for this purpose-built
+// process. Billing must therefore be contacted directly, without redirects.
+func directBillingClient(timeout time.Duration) *http.Client {
+	transport := http.DefaultTransport.(*http.Transport).Clone()
+	transport.Proxy = nil
+	return &http.Client{
+		Timeout:   timeout,
+		Transport: transport,
+		CheckRedirect: func(_ *http.Request, _ []*http.Request) error {
+			return http.ErrUseLastResponse
+		},
+	}
 }
 
 // TLSConfig requires a client certificate which chains to the dedicated meter
