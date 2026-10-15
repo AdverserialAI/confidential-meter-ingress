@@ -67,6 +67,9 @@ func FromEnv(getenv func(string) string) (Config, error) {
 		}
 		cfg.ExpectedClientSPKIs[fingerprint] = struct{}{}
 	}
+	if len(cfg.ExpectedClientSPKIs) == 0 {
+		return Config{}, fmt.Errorf("EXPECTED_CLIENT_SPKI_SHA256 is required")
+	}
 	return cfg, nil
 }
 

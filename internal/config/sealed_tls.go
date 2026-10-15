@@ -37,6 +37,13 @@ func MaterializeSealedTLSFromEnv() error {
 	if provided == 0 {
 		return nil
 	}
+	// The decoded PEM files must remain available to this process, but the
+	// sealed base64 values do not. Remove them on every post-startup path so a
+	// diagnostic child process cannot recover private material from this
+	// process's environment.
+	for _, item := range fields {
+		defer os.Unsetenv(item.encoded)
+	}
 	if provided != len(fields) {
 		return fmt.Errorf("sealed TLS material must provide TLS_CERT_PEM_B64, TLS_KEY_PEM_B64, and CLIENT_CA_PEM_B64 together")
 	}
@@ -46,15 +53,9 @@ func MaterializeSealedTLSFromEnv() error {
 		}
 	}
 
-	dir := strings.TrimSpace(os.Getenv("TLS_MATERIAL_DIR"))
-	if dir == "" {
-		dir = "/tmp/meter-tls"
-	}
-	if err := os.MkdirAll(dir, 0o700); err != nil {
-		return fmt.Errorf("create sealed TLS directory: %w", err)
-	}
-	if err := os.Chmod(dir, 0o700); err != nil {
-		return fmt.Errorf("protect sealed TLS directory: %w", err)
+	dir, err := privateTLSMaterialDir()
+	if err != nil {
+		return err
 	}
 
 	for _, item := range fields {
@@ -74,6 +75,39 @@ func MaterializeSealedTLSFromEnv() error {
 		}
 	}
 	return nil
+}
+
+func privateTLSMaterialDir() (string, error) {
+	dir := strings.TrimSpace(os.Getenv("TLS_MATERIAL_DIR"))
+	if dir == "" {
+		created, err := os.MkdirTemp("", "meter-tls-")
+		if err != nil {
+			return "", fmt.Errorf("create sealed TLS directory: %w", err)
+		}
+		if err := os.Chmod(created, 0o700); err != nil {
+			return "", fmt.Errorf("protect sealed TLS directory: %w", err)
+		}
+		return created, nil
+	}
+	if info, err := os.Lstat(dir); err == nil && info.Mode()&os.ModeSymlink != 0 {
+		return "", fmt.Errorf("TLS_MATERIAL_DIR must not be a symlink")
+	} else if err != nil && !os.IsNotExist(err) {
+		return "", fmt.Errorf("inspect sealed TLS directory: %w", err)
+	}
+	if err := os.MkdirAll(dir, 0o700); err != nil {
+		return "", fmt.Errorf("create sealed TLS directory: %w", err)
+	}
+	info, err := os.Lstat(dir)
+	if err != nil {
+		return "", fmt.Errorf("inspect sealed TLS directory: %w", err)
+	}
+	if info.Mode()&os.ModeSymlink != 0 || !info.IsDir() {
+		return "", fmt.Errorf("TLS_MATERIAL_DIR must be a real directory")
+	}
+	if err := os.Chmod(dir, 0o700); err != nil {
+		return "", fmt.Errorf("protect sealed TLS directory: %w", err)
+	}
+	return dir, nil
 }
 
 func decodePEM(value string) ([]byte, error) {

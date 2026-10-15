@@ -35,7 +35,7 @@ certificate itself.
 | `TLS_CERT_FILE` | yes | Server certificate PEM. |
 | `TLS_KEY_FILE` | yes | Server private-key PEM. |
 | `CLIENT_CA_FILE` | yes | PEM CA that issued the CVM meter-client certificate. |
-| `EXPECTED_CLIENT_SPKI_SHA256` | no | Comma-separated `sha256:<base64url>` pins for the CVM client certificate. Pinning is recommended. |
+| `EXPECTED_CLIENT_SPKI_SHA256` | yes | Comma-separated `sha256:<base64url>` pins for the dedicated CVM meter-client certificate. |
 | `BILLING_METER_URL` | yes | Exact HTTPS billing URL, ending in `/cc/meter`. |
 | `BILLING_INGRESS_SECRET` | yes | Shared random value sent only as `X-Adverserial-Meter-Ingress`. |
 | `REQUEST_TIMEOUT_SECONDS` | no | Default `15`, bounded 1–60. |
@@ -69,7 +69,8 @@ BILLING_INGRESS_SECRET='...' \
 
 For a confidential-VM deployment, supply `TLS_CERT_PEM_B64`,
 `TLS_KEY_PEM_B64`, and `CLIENT_CA_PEM_B64` together instead of the three file
-paths. The process writes them only to a private ephemeral directory before
+paths. The process writes them only to a new private ephemeral directory,
+then removes the base64 secret variables from its process environment before
 loading TLS. The ready-to-deploy Phala CPU-TEE profile is in
 [`deploy/phala`](deploy/phala/README.md).
 

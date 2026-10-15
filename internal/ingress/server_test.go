@@ -124,6 +124,9 @@ func testIngress(t *testing.T, pki testPKI, billingURL string) (*httptest.Server
 	if err != nil {
 		t.Fatal(err)
 	}
+	if !tlsCfg.SessionTicketsDisabled {
+		t.Fatal("mTLS ingress must require a fresh client-certificate handshake")
+	}
 	ts := httptest.NewUnstartedServer(s.Handler())
 	ts.TLS = tlsCfg
 	ts.StartTLS()
@@ -228,5 +231,24 @@ func TestRejectsUnpinnedOrMalformedMeter(t *testing.T) {
 	defer resp.Body.Close()
 	if resp.StatusCode != http.StatusBadRequest {
 		t.Fatalf("malformed meter status = %d", resp.StatusCode)
+	}
+}
+
+func TestRejectsClientWhenProgrammaticConfigurationOmitsSPKIPin(t *testing.T) {
+	pki := newTestPKI(t)
+	billing := httptest.NewTLSServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) { w.WriteHeader(http.StatusNoContent) }))
+	t.Cleanup(billing.Close)
+	ts, s := testIngress(t, pki, billing.URL+"/cc/meter")
+	s.client = billing.Client()
+	s.cfg.ExpectedClientSPKIs = map[string]struct{}{}
+	req, _ := http.NewRequest(http.MethodPost, ts.URL+"/cc/meter", bytes.NewReader(meterBody()))
+	req.Header.Set("Content-Type", "application/json")
+	resp, err := mTLSClient(pki).Do(req)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode != http.StatusForbidden {
+		t.Fatalf("missing pin status = %d", resp.StatusCode)
 	}
 }

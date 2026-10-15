@@ -68,7 +68,8 @@ func directBillingClient(timeout time.Duration) *http.Client {
 }
 
 // TLSConfig requires a client certificate which chains to the dedicated meter
-// CA. The optional SPKI pin is enforced at request time after the handshake.
+// CA. A required SPKI pin is checked again at request time as a defense in
+// depth boundary for programmatically constructed Server values.
 func TLSConfig(cfg config.Config) (*tls.Config, error) {
 	certificate, err := tls.LoadX509KeyPair(cfg.TLSCertFile, cfg.TLSKeyFile)
 	if err != nil {
@@ -83,11 +84,12 @@ func TLSConfig(cfg config.Config) (*tls.Config, error) {
 		return nil, errors.New("CLIENT_CA_FILE has no PEM certificate")
 	}
 	return &tls.Config{
-		Certificates: []tls.Certificate{certificate},
-		ClientAuth:   tls.RequireAndVerifyClientCert,
-		ClientCAs:    clientCAs,
-		MinVersion:   tls.VersionTLS13,
-		NextProtos:   []string{"http/1.1"},
+		Certificates:           []tls.Certificate{certificate},
+		ClientAuth:             tls.RequireAndVerifyClientCert,
+		ClientCAs:              clientCAs,
+		MinVersion:             tls.VersionTLS13,
+		NextProtos:             []string{"http/1.1"},
+		SessionTicketsDisabled: true,
 	}, nil
 }
 
@@ -150,7 +152,9 @@ func (s *Server) handleMeter(w http.ResponseWriter, r *http.Request) {
 
 func (s *Server) pinnedClient(cert *x509.Certificate) bool {
 	if len(s.cfg.ExpectedClientSPKIs) == 0 {
-		return true
+		// Configuration loading requires a pin. Keep the runtime boundary
+		// fail-closed as well for callers that construct Config directly.
+		return false
 	}
 	sum := sha256.Sum256(cert.RawSubjectPublicKeyInfo)
 	fingerprint := "sha256:" + base64.RawURLEncoding.EncodeToString(sum[:])

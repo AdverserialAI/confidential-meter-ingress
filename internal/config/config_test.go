@@ -13,11 +13,12 @@ func validEnv() map[string]string {
 	return map[string]string{
 		"TLS_CERT_FILE": "server.crt", "TLS_KEY_FILE": "server.key", "CLIENT_CA_FILE": "client-ca.crt",
 		"BILLING_METER_URL": "https://billing.example/cc/meter", "BILLING_INGRESS_SECRET": "secret",
+		"EXPECTED_CLIENT_SPKI_SHA256": "sha256:AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
 	}
 }
 
 func TestRequiresBoundarySettings(t *testing.T) {
-	for _, missing := range []string{"TLS_CERT_FILE", "TLS_KEY_FILE", "CLIENT_CA_FILE", "BILLING_METER_URL", "BILLING_INGRESS_SECRET"} {
+	for _, missing := range []string{"TLS_CERT_FILE", "TLS_KEY_FILE", "CLIENT_CA_FILE", "BILLING_METER_URL", "BILLING_INGRESS_SECRET", "EXPECTED_CLIENT_SPKI_SHA256"} {
 		values := validEnv()
 		delete(values, missing)
 		if _, err := FromEnv(env(values)); err == nil || !strings.Contains(err.Error(), missing) {

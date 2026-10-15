@@ -26,11 +26,31 @@ func TestMaterializeSealedTLSFromEnv(t *testing.T) {
 			t.Fatalf("%s mode = %v, err = %v", variable, info.Mode(), err)
 		}
 	}
+	for _, variable := range []string{"TLS_CERT_PEM_B64", "TLS_KEY_PEM_B64", "CLIENT_CA_PEM_B64"} {
+		if value := os.Getenv(variable); value != "" {
+			t.Fatalf("%s remains in the process environment", variable)
+		}
+	}
 }
 
 func TestSealedTLSRejectsPartialBundle(t *testing.T) {
 	t.Setenv("TLS_CERT_PEM_B64", "c2VydmVy")
 	if err := MaterializeSealedTLSFromEnv(); err == nil {
 		t.Fatal("partial bundle was accepted")
+	}
+}
+
+func TestSealedTLSRejectsSymlinkedMaterialDirectory(t *testing.T) {
+	target := t.TempDir()
+	link := filepath.Join(t.TempDir(), "tls-link")
+	if err := os.Symlink(target, link); err != nil {
+		t.Fatal(err)
+	}
+	t.Setenv("TLS_MATERIAL_DIR", link)
+	t.Setenv("TLS_CERT_PEM_B64", base64.StdEncoding.EncodeToString([]byte("-----BEGIN CERTIFICATE-----\nserver\n-----END CERTIFICATE-----\n")))
+	t.Setenv("TLS_KEY_PEM_B64", base64.StdEncoding.EncodeToString([]byte("-----BEGIN PRIVATE KEY-----\nkey\n-----END PRIVATE KEY-----\n")))
+	t.Setenv("CLIENT_CA_PEM_B64", base64.StdEncoding.EncodeToString([]byte("-----BEGIN CERTIFICATE-----\nca\n-----END CERTIFICATE-----\n")))
+	if err := MaterializeSealedTLSFromEnv(); err == nil {
+		t.Fatal("symlinked TLS_MATERIAL_DIR was accepted")
 	}
 }

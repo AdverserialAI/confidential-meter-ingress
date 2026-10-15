@@ -1,7 +1,9 @@
 package main
 
 import (
+	"crypto/tls"
 	"log/slog"
+	"net"
 	"net/http"
 	"os"
 
@@ -41,7 +43,12 @@ func main() {
 		MaxHeaderBytes:    8 << 10,
 	}
 	logger.Info("meter ingress listening", "address", cfg.ListenAddr)
-	if err := httpServer.ListenAndServeTLS("", ""); err != nil {
+	listener, err := net.Listen("tcp", cfg.ListenAddr)
+	if err != nil {
+		logger.Error("cannot listen for meter ingress", "error", err.Error())
+		os.Exit(1)
+	}
+	if err := httpServer.Serve(tls.NewListener(newLimitedListener(listener, meterConnectionLimit), tlsConfig)); err != nil {
 		logger.Error("meter ingress stopped", "error", err.Error())
 		os.Exit(1)
 	}
