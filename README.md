@@ -1,6 +1,21 @@
 # Confidential meter ingress
 
-`confidential-meter-ingress` is the small, separately deployable mTLS boundary
+> **Not in the production metering path.** As of 2026-11-24 the production
+> proxy ([attest-proxy](https://github.com/AdverserialAI/attest-proxy)
+> `v0.1.0-rc.33`) runs with `METER_DELIVERY_MODE: direct-signed`: it signs each
+> count-only usage record with a meter key generated inside the confidential
+> VM and posts it straight to `https://billing.adverserial.ai` over TLS. No
+> mTLS hop and no instance of this service sits in between. The deployed
+> composition is documented in
+> [confidential-infra `deployed/`](https://github.com/AdverserialAI/confidential-infra/tree/main/deployed).
+>
+> This repository is the optional alternative. The proxy still implements the
+> matching `mtls-ingress` mode (it is the proxy's default when
+> `METER_DELIVERY_MODE` is unset), so the service can be put in the path by a
+> deployment that wants a separate network-origin check. Do not describe the
+> production deployment as using mTLS for metering.
+
+`confidential-meter-ingress` is a small, separately deployable mTLS boundary
 between an attested inference proxy and `billing.adverserial.ai`.
 
 It accepts **only** a signed, count-only confidential meter envelope at
@@ -44,14 +59,21 @@ certificate itself.
 or non-default path. It is deliberately fixed at startup.
 
 Generate a dedicated private PKI for this one link. Keep the CVM client key
-sealed to the CVM. Put the CA public certificate and the ingress server
+sealed to the CVM. Unlike the proxy's signing keys, which are generated inside
+the VM, this client certificate and key are created by the operator and passed
+in as sealed configuration. Put the CA public certificate and the ingress server
 certificate/key on the ingress host; never share client keys with billing.
 
 ## Billing configuration
 
 Set `CC_METER_INGRESS_SHARED_SECRET` to the same high-entropy secret. The
-billing endpoint rejects direct requests that do not present this header, then
+billing endpoint rejects requests that do not present this header, then
 still verifies the meter JWS and settles the reservation idempotently.
+
+The same header is what the proxy itself sends in `direct-signed` mode, where
+its `METER_INGRESS_SHARED_SECRET` variable holds the value. Despite the name,
+in that mode no ingress is involved: the secret is a capability shared between
+the proxy and billing.
 
 ## Run
 

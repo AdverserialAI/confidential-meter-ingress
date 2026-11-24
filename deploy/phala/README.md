@@ -1,5 +1,10 @@
 # Phala CPU-TEE deployment
 
+> This profile describes how the ingress *would* be deployed. Production does
+> not use it: usage records go directly from the proxy to billing
+> (`METER_DELIVERY_MODE: direct-signed`). See the note at the top of the
+> [root README](../../README.md).
+
 Deploy this service as its own small Phala CPU confidential VM, named
 `cc-meter-ingress`. It is intentionally separate from the GPU CVM and from
 Heroku billing: the ingress validates the GPU CVM's TLS client certificate
@@ -27,12 +32,15 @@ an untracked local environment file using standard base64 (`base64 < file`).
 3. Confirm `GET /healthz` over the TLS pass-through hostname returns `204`.
    A connection without the dedicated GPU-CVM client certificate must fail the
    TLS handshake.
-4. Create a Gandi CNAME for `meter-ingress.adverserial.ai` that targets the
+4. Create a DNS CNAME for `meter-ingress.adverserial.ai` (the `adverserial.ai` zone moved
+   from Gandi to Cloudflare on 2026-10-06; the record must be DNS-only, not proxied) that targets the
    resulting Phala `<app-id>-8443s.dstack-…phala.network` hostname. The `s`
    suffix is essential: it preserves TLS to this process.
-5. Set the GPU CVM's `METER_URL=https://meter-ingress.adverserial.ai` and
-   publish the corresponding mTLS server CA in its sealed bundle. Do this only
-   as part of the one reviewed GPU-CVM update.
+5. Set the GPU CVM's `METER_DELIVERY_MODE=mtls-ingress` and
+   `METER_URL=https://meter-ingress.adverserial.ai`, and supply the mTLS client
+   certificate, key and server CA in its sealed configuration. Do this only as
+   part of a reviewed GPU-CVM update. This step has not been carried out in
+   production.
 
 The meter service carries no prompts, completions, API keys, session cookies,
 or entitlement tokens. It receives an idempotent, signed token-count record
